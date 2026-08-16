@@ -72,3 +72,5 @@ Thumbs.db
 uploads/
 storage/
 data/
+# ChromaDB
+backend/chroma_db/
