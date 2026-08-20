@@ -2,16 +2,27 @@ from pathlib import Path
 
 from pypdf import PdfReader
 
+from app.core.config import settings
 
-def save_uploaded_file(file, upload_dir: str = "uploads") -> str:
+
+def save_uploaded_file(
+    file,
+    upload_dir: str | None = None,
+) -> str:
     """
     Save an uploaded file and return its path.
     """
 
+    if upload_dir is None:
+        upload_dir = settings.UPLOAD_DIR
+
     upload_path = Path(upload_dir)
     upload_path.mkdir(parents=True, exist_ok=True)
 
-    file_path = upload_path / file.filename
+    # Prevent directory traversal through a malicious filename.
+    filename = Path(file.filename).name
+
+    file_path = upload_path / filename
 
     with open(file_path, "wb") as buffer:
         buffer.write(file.file.read())
@@ -41,6 +52,8 @@ def extract_text_from_pdf(file_path: str) -> list[dict]:
         )
 
     return pages
+
+
 def chunk_text(
     pages: list[dict],
     chunk_size: int = 1000,

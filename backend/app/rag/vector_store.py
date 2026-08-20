@@ -1,11 +1,15 @@
 import chromadb
 
+from app.core.config import settings
 
-CHROMA_PATH = "chroma_db"
+
+CHROMA_PATH = settings.CHROMA_PATH
+
 
 client = chromadb.PersistentClient(
     path=CHROMA_PATH
 )
+
 
 collection = client.get_or_create_collection(
     name="nexus_documents"
@@ -28,6 +32,7 @@ def add_chunks(
         metadatas=metadatas,
         embeddings=embeddings,
     )
+
 
 def search_chunks(
     query_embedding: list[float],
