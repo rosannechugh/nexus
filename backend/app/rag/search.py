@@ -1,12 +1,20 @@
-from app.rag.embeddings import generate_embedding
 from app.rag.vector_store import search_chunks
 
 
-def semantic_search(query: str, top_k: int = 5):
-    query_embedding = generate_embedding(query)
+def semantic_search(
+    query: str,
+    user_id: int,
+    top_k: int = 5,
+):
+    """
+    Perform semantic search over the authenticated user's documents.
+
+    Qdrant Cloud handles query embedding and vector similarity search.
+    """
 
     results = search_chunks(
-        query_embedding=query_embedding,
+        query=query,
+        user_id=user_id,
         top_k=top_k,
     )
 
@@ -15,22 +23,26 @@ def semantic_search(query: str, top_k: int = 5):
 
 if __name__ == "__main__":
     query = input("Enter your research question: ")
+    user_id = int(input("Enter user ID: "))
 
-    results = semantic_search(query)
-
-    documents = results["documents"][0]
-    metadatas = results["metadatas"][0]
-    distances = results["distances"][0]
+    results = semantic_search(
+        query=query,
+        user_id=user_id,
+    )
 
     print("\n--- NEXUS SEARCH RESULTS ---\n")
 
-    for index, (document, metadata, distance) in enumerate(
-        zip(documents, metadatas, distances),
-        start=1,
-    ):
+    for index, result in enumerate(results, start=1):
+        payload = result.payload or {}
+
+        score = float(result.score)
+        distance = 1.0 - score
+
         print(f"Result {index}")
-        print(f"Page: {metadata['page_number']}")
-        print(f"Chunk: {metadata['chunk_index']}")
+        print(f"Page: {payload.get('page_number', 'Unknown')}")
+        print(f"Chunk: {payload.get('chunk_index', 'Unknown')}")
         print(f"Distance: {distance:.4f}")
-        print(f"\n{document[:500]}")
+        print(
+            f"\n{payload.get('text', '')[:500]}"
+        )
         print("\n" + "-" * 60)

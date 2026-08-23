@@ -17,6 +17,7 @@ venv/
 .venv/
 env/
 ENV/
+testenv/
 
 # Python tooling
 .pytest_cache/

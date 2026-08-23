@@ -1,10 +1,19 @@
-from langchain_ollama import ChatOllama
+import os
+
+from dotenv import load_dotenv
+from openai import OpenAI
 
 
-llm = ChatOllama(
-    model="llama3.2",
-    temperature=0,
+load_dotenv()
+
+
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=os.getenv("OPENROUTER_API_KEY"),
 )
+
+
+MODEL_NAME = "openrouter/free"
 
 
 def generate_answer(
@@ -41,7 +50,7 @@ say that the available sources do not provide enough evidence.
 
 Do not invent facts.
 
-When making a claim based on a source, cite it using:
+When making a claim based on a source, cite it using exactly:
 
 [Source X, Page Y]
 
@@ -54,6 +63,15 @@ EVIDENCE:
 {evidence}
 """
 
-    response = llm.invoke(prompt)
+    response = client.chat.completions.create(
+        model=MODEL_NAME,
+        messages=[
+            {
+                "role": "user",
+                "content": prompt,
+            }
+        ],
+        temperature=0,
+    )
 
-    return response.content
+    return response.choices[0].message.content

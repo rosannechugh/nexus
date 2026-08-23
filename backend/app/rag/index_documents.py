@@ -1,8 +1,11 @@
 from app.db.session import SessionLocal
-from app.models.document import Document
-from app.models.document_chunk import DocumentChunk
+
+# Import all related models so SQLAlchemy registers
+# their relationships before querying.
 from app.models.user import User
-from app.rag.embeddings import generate_embeddings
+from app.models.document_chunk import DocumentChunk
+from app.models.document import Document
+
 from app.rag.vector_store import add_chunks
 
 
@@ -30,7 +33,9 @@ def index_document_chunks(document_id: int):
         )
 
         if not chunks:
-            print("No chunks found.")
+            print(
+                f"No chunks found for document {document_id}."
+            )
             return
 
         print(
@@ -43,14 +48,8 @@ def index_document_chunks(document_id: int):
             for chunk in chunks
         ]
 
-        print("Generating embeddings...")
-
-        embeddings = generate_embeddings(texts)
-
-        print("Embeddings generated.")
-
         chunk_ids = [
-            f"chunk_{chunk.id}"
+            chunk.id
             for chunk in chunks
         ]
 
@@ -64,19 +63,18 @@ def index_document_chunks(document_id: int):
             for chunk in chunks
         ]
 
+        print("Indexing chunks into Qdrant...")
+
         add_chunks(
             chunk_ids=chunk_ids,
             texts=texts,
             metadatas=metadatas,
-            embeddings=embeddings,
         )
 
         print(
             f"Successfully indexed "
-            f"{len(chunks)} chunks into ChromaDB."
+            f"{len(chunks)} chunks into Qdrant."
         )
 
     finally:
         db.close()
-
-

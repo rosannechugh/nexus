@@ -16,6 +16,10 @@ class Settings(BaseSettings):
     CHROMA_PATH: str = "chroma_db"
     UPLOAD_DIR: str = "uploads"
 
+    QDRANT_URL: str
+    QDRANT_API_KEY: str
+    QDRANT_COLLECTION: str = "nexus_documents"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         extra="ignore",
