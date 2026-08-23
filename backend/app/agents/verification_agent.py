@@ -1,7 +1,13 @@
+import json
+import os
 from enum import Enum
 
-from langchain_ollama import ChatOllama
+from dotenv import load_dotenv
+from openai import OpenAI
 from pydantic import BaseModel, Field
+
+
+load_dotenv()
 
 
 class VerificationStatus(str, Enum):
@@ -32,14 +38,13 @@ class VerificationResult(BaseModel):
     claims: list[VerifiedClaim]
 
 
-llm = ChatOllama(
-    model="llama3.2",
-    temperature=0,
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=os.getenv("OPENROUTER_API_KEY"),
 )
 
-verifier = llm.with_structured_output(
-    VerificationResult
-)
+
+MODEL_NAME = "openrouter/free"
 
 
 def verify_claims(
@@ -80,6 +85,19 @@ IMPORTANT RULES:
 6. Identify the source numbers supporting each claim.
 7. Do not invent sources.
 
+Return ONLY valid JSON in this exact structure:
+
+{{
+    "claims": [
+        {{
+            "claim": "The factual claim",
+            "status": "SUPPORTED",
+            "supporting_sources": [1],
+            "explanation": "Why the evidence supports the claim"
+        }}
+    ]
+}}
+
 GENERATED ANSWER:
 
 {answer}
@@ -89,4 +107,27 @@ EVIDENCE:
 {evidence_block}
 """
 
-    return verifier.invoke(prompt)
+    response = client.chat.completions.create(
+        model=MODEL_NAME,
+        messages=[
+            {
+                "role": "user",
+                "content": prompt,
+            }
+        ],
+        temperature=0,
+        response_format={
+            "type": "json_object",
+        },
+    )
+
+    content = response.choices[0].message.content
+
+    if not content:
+        raise ValueError(
+            "Verification agent returned an empty response."
+        )
+
+    data = json.loads(content)
+
+    return VerificationResult.model_validate(data)

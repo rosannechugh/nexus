@@ -1,7 +1,13 @@
+import json
+import os
 from enum import Enum
 
-from langchain_ollama import ChatOllama
+from dotenv import load_dotenv
+from openai import OpenAI
 from pydantic import BaseModel, Field
+
+
+load_dotenv()
 
 
 class QueryType(str, Enum):
@@ -29,13 +35,13 @@ class QueryPlan(BaseModel):
     )
 
 
-llm = ChatOllama(
-    model="llama3.2",
-    temperature=0,
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=os.getenv("OPENROUTER_API_KEY"),
 )
 
 
-planner = llm.with_structured_output(QueryPlan)
+MODEL_NAME = "openrouter/free"
 
 
 def plan_query(query: str) -> QueryPlan:
@@ -67,9 +73,39 @@ Determine:
 3. Whether multiple sources are required
 4. Brief reasoning
 
+Return ONLY valid JSON in this format:
+
+{{
+    "query_type": "document_qa",
+    "requires_retrieval": true,
+    "requires_multiple_sources": false,
+    "reasoning": "Brief explanation"
+}}
+
 USER QUERY:
 
 {query}
 """
 
-    return planner.invoke(prompt)
+    response = client.chat.completions.create(
+        model=MODEL_NAME,
+        messages=[
+            {
+                "role": "user",
+                "content": prompt,
+            }
+        ],
+        temperature=0,
+        response_format={
+            "type": "json_object",
+        },
+    )
+
+    content = response.choices[0].message.content
+
+    if not content:
+        raise ValueError("Planner returned an empty response.")
+
+    data = json.loads(content)
+
+    return QueryPlan.model_validate(data)
