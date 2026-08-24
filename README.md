@@ -240,7 +240,7 @@ python -m venv testenv
 #### Windows PowerShell
 
 ```powershell
-.	estenv\Scripts\Activate.ps1
+.	testenv\Scripts\Activate.ps1
 ```
 
 #### macOS / Linux
@@ -347,21 +347,6 @@ Interactive API documentation is available through FastAPI Swagger UI at:
 More details are available in [`docs/api.md`](docs/api.md).
 
 ---
-
-## Docker
-
-NEXUS also includes Docker configuration for reproducible local development.
-
-Build and start the configured services with:
-
-```bash
-docker compose up --build
-```
-
-Docker is intended as an optional local development/deployment aid. The current production deployment uses Vercel for the frontend and Render for the backend.
-
----
-
 ## Production Deployment
 
 The deployed NEXUS architecture uses:
