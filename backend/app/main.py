@@ -21,6 +21,10 @@ cors_origins = [
     if origin.strip()
 ]
 
+# Production frontend
+if "https://nexus-two-bay-53.vercel.app" not in cors_origins:
+    cors_origins.append("https://nexus-two-bay-53.vercel.app")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins,
